@@ -8,7 +8,11 @@ A Reactive style builder for React and React Native
 
 ## Example app
 
-You can see a [demo-app](https://github.com/kristianmandrup/react-smart-styles-demo) using style builder.
+See:
+- [react demo app](https://github.com/kristianmandrup/react-smart-styles-demo) 
+- [react native demo app](https://github.com/kristianmandrup/react-native-style-builder-demo)
+
+For full usage examples ;)
 
 ## Getting Started
 
