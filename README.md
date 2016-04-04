@@ -6,6 +6,9 @@
 
 *Style builder* is a React plugin which makes it easy to do stateful styling of components. Styles are registered as functions, which depend on change to either `state`, `props` change or either. Whenever `state` or `props` change, the StyleBuilder is re-evaluated for the relevant style functions and the component is auto-matically re-rendered with the new (generated) style.
 
+## Example app
+
+You can see a [demo-app](https://github.com/kristianmandrup/react-smart-styles-demo) using style builder.
 
 ## Getting Started
 
