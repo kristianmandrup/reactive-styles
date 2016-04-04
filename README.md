@@ -1,10 +1,10 @@
-# Style-builder [![Build Status](https://secure.travis-ci.org/kristianmandrup/style-builder.png?branch=master)](http://travis-ci.org/kristianmandrup/style-builder) [![NPM version](https://badge-me.herokuapp.com/api/npm/style-builder.png)](http://badges.enytc.com/for/npm/style-builder)
+# Reactive style builder
 
-> Style builder for React and React Native
+A Reactive style builder for React and React Native
 
 ## Rationale
 
-*Style builder* is a React plugin which makes it easy to do stateful styling of components. Styles are registered as functions, which depend on change to either `state`, `props` change or either. Whenever `state` or `props` change, the StyleBuilder is re-evaluated for the relevant style functions and the component is auto-matically re-rendered with the new (generated) style.
+*Reactive style builder* is a React plugin which makes it easy to do stateful styling of components. Styles are registered as functions, which depend on change to either `state`, `props` change or either. Whenever `state` or `props` change, the StyleBuilder is re-evaluated for the relevant style functions and the component is auto-matically re-rendered with the new (generated) style.
 
 ## Example app
 
@@ -12,7 +12,7 @@ You can see a [demo-app](https://github.com/kristianmandrup/react-smart-styles-d
 
 ## Getting Started
 
-`$ npm i -S style-builder`
+`$ npm i -S reactive-style-builder`
 
 ## Usage
 
@@ -28,7 +28,7 @@ The `styleObj` can be either an `Object` or a class instance (via `new`).
 ## React
 
 ```js
-import { StyleBuilder } from 'style-builder.js'
+import { StyleBuilder } from 'reactive-style-builder'
 
 const TodoMixin = {
   title(state, props) {
@@ -82,7 +82,7 @@ Styles are always local state (ie in local scope) of the component and should no
 
 ```js
 import Styler from './Styler.js'
-import { statefulStyling, updateStyles } from 'style-builder'
+import { statefulStyling, updateStyles } from 'reactive-style-builder'
 import { injectProps } from 'relpers'
 
 import React, {
@@ -139,7 +139,7 @@ export default class MyComponent extends Component {
 For React Native you need to register a special `native` computer, which wraps the built style result in a `StyleSheet` instance.
 
 ```js
-import { StyleBuilder } from 'style-builder.js'
+import { StyleBuilder } from 'reactive-style-builder'
 import { StyleSheet } from 'react-native'
 
 function native(state, props) {
@@ -174,7 +174,7 @@ Please submit all issues and pull requests to the [kristianmandrup/style-builder
 ## Support
 If you have any problem or suggestion please open an issue [here](https://github.com/kristianmandrup/style-builder/issues).
 
-## License 
+## License
 
 The MIT License
 
