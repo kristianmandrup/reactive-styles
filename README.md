@@ -147,11 +147,11 @@ import { StyleBuilder } from 'reactive-style-builder'
 import { StyleSheet } from 'react-native'
 
 function native(state, props) {
-    return StyleSheet.create(this.default())
+    return StyleSheet.create(this.default(state, props))
 }
 
 export default StyleBuilder.create(TodoMixin, {
-    name: 'MyComponent'
+    name: 'MyComponent',
     computers: {
         native: native
     }
