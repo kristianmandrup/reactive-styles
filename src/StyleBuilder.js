@@ -75,11 +75,11 @@ export default class StyleBuilder {
   }
 
   computerFor(type) {
-    return this.computers[type].bind(this);
+    return this.computers[type];
   }
 
   computeFor(type) {
-    return this.computerFor(type) || this.default
+    return (this.computerFor(type) || this.default).bind(this)
   }
 
   default(props, state) {
