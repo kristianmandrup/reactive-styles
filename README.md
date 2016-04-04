@@ -13,6 +13,15 @@
 
 ## Usage
 
+You can use StyleBuilder with React or React Native as shown below.
+Use `StyleBuilder.create` to creat a StyleBuilder class for your component with the `styles` map containing your styling functions (think "reactive style classes").
+
+```js
+StyleBuilder.create(styleObj)
+```
+
+The `styleObj` can be either an `Object` or a class instance (via `new`).
+
 ## React
 
 ```js
@@ -37,10 +46,15 @@ export default StyleBuilder.create(TodoMixin, {
 });
 ```
 
-Alternatively use a class and apply f.ex one or more class mixins to "mix and match" global and local styles if needed...
+### Using Style classes
+
+As an alternative, pass a Style class and apply one or more class mixins to "mix and match" global and local styles if needed...
+
 You can also use `Object.assign` or `_.merge` to merge objects directly.
 
 ```js
+import { mixin } from 'core-decorators';
+
 @mixin(TodoMixin)
 class Styles {
 }
@@ -48,28 +62,20 @@ class Styles {
 export default StyleBuilder.create(new Styles(), {name: 'App'});
 ```
 
-
-## React Native
-
-For React Native you need to register a special `native` computer, which wraps the built style result in a `StyleSheet` instance.
-
-```js
-import { StyleBuilder } from 'style-builder.js'
-import { StyleSheet } from 'react-native'
-
-function native(state, props) {
-    return StyleSheet.create(this.browser())
-}
-
-export default StyleBuilder.create(TodoMixin, {
-    name: 'MyComponent'
-    computers: {
-        native: native
-    }
-});
-```
-
 ## Component usage
+
+You currently need to use generators: `@statefulStyling` and `@updateStyles`
+
+The `@statefulStyling` decorator adds the following functions to the component class:
+- `updateState`
+- `initStyles`
+- `updateStyles`
+
+The `updateState` function clears the "style cache key" before the state is set. Use `updateState` to set the state instead of `setState` for stateful styles to work correctly and avoid infinite recurssion!
+`initStyles` creates the initial `StyleBuilder` (in `componentWillMount`) and `updateStyles` is called by `componentWillUpdate` just before a new render to update the styling state.
+
+Use the `@updateStyles` decorator on `componentWillMount` and `componentWillUpdate`. This ensures that the StyleBuilder is called whenever the component is about to render after a state/props change. It will then calculate the `styles` based on the new state/props and set it on local state.
+Styles are always local state (ie in local scope) of the component and should not be reflected in app state!
 
 ```js
 import Styler from './Styler.js'
@@ -101,13 +107,6 @@ export default class MyComponent extends Component {
   componentWillUpdate() {
   }
 
-  shouldComponentUpdate(nextProps, nextState) {
-    if (this.props === nextProps && this.state === nextState) {
-      return false;
-    }
-    return true;
-  }
-
   _completed() {
     this.updateState({todo: {completed: true}});
   }
@@ -130,6 +129,28 @@ export default class MyComponent extends Component {
   }
 }
 ```
+
+
+## React Native
+
+For React Native you need to register a special `native` computer, which wraps the built style result in a `StyleSheet` instance.
+
+```js
+import { StyleBuilder } from 'style-builder.js'
+import { StyleSheet } from 'react-native'
+
+function native(state, props) {
+    return StyleSheet.create(this.default())
+}
+
+export default StyleBuilder.create(TodoMixin, {
+    name: 'MyComponent'
+    computers: {
+        native: native
+    }
+});
+```
+
 
 ## Development
 

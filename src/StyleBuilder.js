@@ -79,12 +79,14 @@ export default class StyleBuilder {
   }
 
   computeFor(type) {
-    return this.computerFor(type) || function(props, state) => {
-      this.log('default', state, props);
-      state = state || this.state;
-      props = props || this.props;
-      return this.compute(state, props)
-    }
+    return this.computerFor(type) || this.default
+  }
+
+  default(props, state) {
+    this.log('default', state, props);
+    state = state || this.state;
+    props = props || this.props;
+    return this.compute(state, props)
   }
 
   compute(state, props) {
