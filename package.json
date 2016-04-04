@@ -1,6 +1,6 @@
 {
-  "name": "style-builder",
-  "description": "Style builder for React and React Native",
+  "name": "reactive-style-builder",
+  "description": "Reactive Style builder for React and React Native",
   "version": "0.1.0",
   "homepage": "https://github.com/kristianmandrup/style-builder",
   "author": {
