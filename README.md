@@ -1,5 +1,7 @@
 # Reactive style builder
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/kristianmandrup/style-builder.svg)](https://greenkeeper.io/)
+
 A Reactive style builder for React and React Native
 
 ## Rationale
