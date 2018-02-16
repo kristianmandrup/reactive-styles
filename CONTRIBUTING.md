@@ -1,4 +1,4 @@
-# Contributing to style-builder
+# Contributing to react-style-builder
 
 Please take a moment to review this document in order to make the contribution
 process easy and effective for everyone involved.

@@ -9,7 +9,8 @@ A Reactive style builder for React and React Native
 ## Example app
 
 See:
-- [react demo app](https://github.com/kristianmandrup/react-smart-styles-demo) 
+
+- [react demo app](https://github.com/kristianmandrup/react-smart-styles-demo)
 - [react native demo app](https://github.com/kristianmandrup/react-native-style-builder-demo)
 
 For full usage examples ;)
@@ -35,13 +36,16 @@ The `styleObj` can be either an `Object` or a class instance (via `new`).
 import { StyleBuilder } from 'reactive-style-builder'
 
 const TodoMixin = {
-  title(state, props) {
+  title({state, props}) {
+      const {
+        todo
+      } = state
     return {
-      color: state.todo && state.todo.completed ? 'red' : 'green',
+      color: todo && todo.completed ? 'red' : 'green',
       backgroundColor: props.count > 1 ? 'yellow' : 'white'
     }
   },
-  heading(state) {
+  heading({state}) {
     return {
       color: state.on ? 'blue' : 'gray',
     }
@@ -57,7 +61,7 @@ export default StyleBuilder.create(TodoMixin, {
 
 As an alternative, pass a Style class and apply one or more class mixins to "mix and match" global and local styles if needed...
 
-You can also use `Object.assign` or `_.merge` to merge objects directly.
+You can also use `Object.assign` or `...` to merge objects directly.
 
 ```js
 import { mixin } from 'core-decorators';
@@ -66,30 +70,55 @@ import { mixin } from 'core-decorators';
 class Styles {
 }
 
-export default StyleBuilder.create(new Styles(), {name: 'App'});
+export default StyleBuilder.create(Styles, {
+    name: 'App'
+});
 ```
 
-## Component usage
+## Component usage: Decorators
 
 You currently need to use generators: `@statefulStyling` and `@updateStyles`
 
 The `@statefulStyling` decorator adds the following functions to the component class:
+
 - `updateState`
 - `initStyles`
 - `updateStyles`
 
-The `updateState` function clears the "style cache key" before the state is set. Use `updateState` to set the state instead of `setState` for stateful styles to work correctly and avoid infinite recurssion!
-`initStyles` creates the initial `StyleBuilder` (in `componentWillMount`) and `updateStyles` is called by `componentWillUpdate` just before a new render to update the styling state.
+### updateState
 
-Use the `@updateStyles` decorator on `componentWillMount` and `componentWillUpdate`. This ensures that the StyleBuilder is called whenever the component is about to render after a state/props change. It will then calculate the `styles` based on the new state/props and set it on local state.
+The `updateState` function clears the "style cache key" before the state is set.
+
+Use `updateState` to set the state instead of `setState` for stateful styles to work correctly and avoid infinite recurssion!
+
+### initStyles
+
+`initStyles` creates the initial `StyleBuilder` (in `componentWillMount`)
+
+### updateStyles
+
+`updateStyles` is called by `componentWillUpdate` just before a new render to update the styling state.
+
+Use the `@updateStyles` decorator on `componentWillMount` and `componentWillUpdate`. This ensures that the StyleBuilder is called whenever the component is about to render after a state/props change.
+
+It will then calculate the `styles` based on the new state/props and set it on local state.
+
 Styles are always local state (ie in local scope) of the component and should not be reflected in app state!
 
-```js
-import Styler from './Styler.js'
-import { statefulStyling, updateStyles } from 'reactive-style-builder'
-import { injectProps } from 'relpers'
+### Example: Decorators
 
-import React, {
+```js
+import { Styler } from './Styler'
+import {
+    statefulStyling,
+    updateStyles
+} from 'reactive-style-builder'
+import {
+    injectProps
+} from 'relpers'
+
+import * as React from 'React'
+import {
   Component
 } from 'react'
 
@@ -114,12 +143,22 @@ export default class MyComponent extends Component {
   componentWillUpdate() {
   }
 
-  _completed() {
-    this.updateState({todo: {completed: true}});
+  @autobind
+  handleCompleted() {
+    this.updateState({
+        todo: {
+            completed: true
+        }
+    });
   }
 
-  _start() {
-    this.updateState({todo: {completed: false}});
+  @autobind
+  handleStart() {
+    this.updateState({
+        todo: {
+            completed: false
+        }
+    });
   }
 
   // https://github.com/goncalvesjoao/relpers
@@ -129,14 +168,13 @@ export default class MyComponent extends Component {
     return (
       <div style={styles.header}>
         <div style={styles.title}>Blip</div>
-        <button onClick={this._completed.bind(this)} >Complete</button>
-        <button onClick={this._start.bind(this)} >Start</button>
+        <button onClick={this.handleCompleted} >Complete</button>
+        <button onClick={this.handleStart} >Start</button>
       </div>
     )
   }
 }
 ```
-
 
 ## React Native
 
@@ -146,8 +184,9 @@ For React Native you need to register a special `native` computer, which wraps t
 import { StyleBuilder } from 'reactive-style-builder'
 import { StyleSheet } from 'react-native'
 
-function native(state, props) {
-    return StyleSheet.create(this.default(state, props))
+// native will be injected into a component and will thus have access to default?
+function native(options = {}) {
+    return StyleSheet.create(this.default(options))
 }
 
 export default StyleBuilder.create(TodoMixin, {
@@ -157,7 +196,6 @@ export default StyleBuilder.create(TodoMixin, {
     }
 });
 ```
-
 
 ## Development
 
