@@ -6,19 +6,32 @@ export {
   styleHelpers
 }
 
-export class Styler {
+export interface IStyler {
+  state?: any
+  props: any
+  styleClasses: string[]
+  configure(opts: IPropsState): void
+}
+
+export interface IStylerConfig extends IPropsState {
+  styleClasses?: string[]
+}
+
+export abstract class Styler {
   state: any
   props: any
   _ = styleHelpers
   // only methods listed here will be used for styling classes
-  styleClasses = []
+  styleClasses: string[] = []
 
-  constructor(opts: IPropsState) {
+  constructor(opts: IStylerConfig) {
     this.configure(opts)
   }
 
-  configure({ state, props }: IPropsState) {
-    this.state = state
-    this.props = props
+  configure(opts: IStylerConfig): void {
+    const { state, props, styleClasses } = opts
+    this.state = state || {}
+    this.props = props || {}
+    this.styleClasses = styleClasses || this.styleClasses || []
   }
 }

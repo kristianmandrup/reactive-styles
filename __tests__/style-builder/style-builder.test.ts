@@ -8,13 +8,13 @@ import {
 const styles = {
 }
 
-describe('Stylestyler', () => {
+describe('StylesBuilder', () => {
   describe('create w styles only', () => {
     let styler: any
     beforeEach(() => {
       styler = new StylesBuilder(styles)
     })
-    it('should create a Stylestyler object', () => {
+    it('should create a StylesBuilder object', () => {
       expect(styler).toBeDefined()
     })
 
@@ -72,6 +72,7 @@ describe('Stylestyler', () => {
     const state: any = {
       a: 1
     }
+
     beforeEach(() => {
 
       styler = new StylesBuilder(styles, {

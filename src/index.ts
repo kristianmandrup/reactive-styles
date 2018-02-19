@@ -22,5 +22,6 @@ export {
 
 export {
   styleHelpers,
-  Styler
+  Styler,
+  IStyler
 } from './styler';

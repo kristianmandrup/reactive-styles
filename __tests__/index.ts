@@ -1,4 +1,6 @@
 export {
+  IStyler,
+  Styler,
   StylesBuilder,
   createStylesBuilder,
   IStylesComputer,
