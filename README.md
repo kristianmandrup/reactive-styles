@@ -2,9 +2,78 @@
 
 A Reactive style builder for React and React Native
 
-## Rationale
+## Architecture
 
-*Reactive style builder* is a React plugin which makes it easy to do stateful styling of components. Styles are registered as functions, which depend on change to either `state`, `props` change or either. Whenever `state` or `props` change, the StyleBuilder is re-evaluated for the relevant style functions and the component is auto-matically re-rendered with the new (generated) style.
+*Reactive styles* is an extension which makes it easy to do declarative reactive styling of components.
+
+The extension has been designed to be used with React or any "react-like" frameworks/libraries such as React Native or StencilJS etc.
+
+Style "classes" are registered as functions that can re-compute styles.
+
+When `state` or `props` change, the lifecycle method `componentWillUpdate` is triggered just before re-rendering. The `styler` of the component will then re-compute new styles based on the new "state" before re-rendering.
+
+### componentWillUpdate
+
+The `componentWillUpdate()` is a chance for us to handle configuration changes and prepare for the next render. If we want to access the old props or state, we can call this.props or this.state. We can then compare them to the new values and make changes/calculations as required.
+
+Unlike `componentWillMount()`, we should not call `this.setState()` here. The reason we do not call `this.setState()` is that the method triggers another `componentWillUpdate()`. If we trigger a state change in `componentWillUpdate()` we will end up in an infinite loop 1.
+
+### Enhancing componentWillUpdate
+
+The flow requires that the component sets the new computed styles in `this.styles` before re-rendering. We achieve this by "hijacking" into `componentWillUpdate()`.
+
+```js
+componentWillUpdate(nextProps: Props, nextState: State) {
+  const state = this.layoutState || nextState
+  this.styles = this.styler.compute({props: nextProps, state))
+}
+```
+
+We call compute with the new `props` and the internal `layoutState` or `newState` to re-compute `styles` which will then be available for `render` method.
+
+We can achieve the same with decorator `@updateStyles`
+
+```js
+@updateStyles()
+componentWillUpdate(nextProps: Props, nextState: State) {
+}
+```
+
+This decorates the component with:
+
+```js
+_computeNewStyles() {
+  const state = this.layoutState || nextState
+  this.styles = this.styler.compute({props: nextProps, state))
+}
+
+componentWillUpdate(nextProps: Props, nextState: State) {
+  // previous componentWillUpdate logic
+  this._computeNewStyles(nextProps, nextState)
+}
+```
+
+## Using layoutState
+
+We pass `layoutState` by default, in order to allow a more flexible distinction between application and layout (only) state, if needed.
+
+Sample implementation:
+
+```js
+setState(newState) {
+  this.layoutState = newState
+  this.appState = newState
+  super.setState(this.appState)
+}
+
+set layoutState(newState) {
+  this._layoutState = // some state filtering
+}
+
+set appState(newState) {
+  this._appState = // some state filtering
+}
+```
 
 ## Example app
 
@@ -21,22 +90,66 @@ For full usage examples ;)
 
 ## Usage
 
-You can use StyleBuilder with React or React Native as shown below.
-Use `StyleBuilder.create` to creat a StyleBuilder class for your component with the `styles` map containing your styling functions (think "reactive style classes").
+Use `StyleBuilder.create` or `createStyleBuilder` to create a `StyleBuilder` instance for your component.
+
+The `StyleBuilder` should be passed a `styler`, which is a map containing your reactive styling functions (think "reactive style classes").
+
+The `StyleBuilder` exposes a `compute({props, state})` function, which computes new `styles`.
+
+### styles
+
+The `styles` result can be used in any context, such as in React or React Native.
+The styles return an Object with keys, such as:
 
 ```js
-StyleBuilder.create(styleObj)
+styles = {
+  heading: {
+    fontSize: '18',
+    color: 'green'
+  },
+  footer: {
+    backgroundColor: 'darkgrey'
+  }
+}
 ```
 
-The `styleObj` can be either an `Object` or a class instance (via `new`).
+Here, `styles.heading` and `styles.footer` are refered to as "style classes".
 
-## React
+The style classes can be either an Object or an Array, depending on the context the styles are used in. For React Native, the style classes will often contain an array referencing one or more `StyleSheet` classes created via `StyleSheet.create(styleSheerObj)`
+
+You can pass a custom transformer, such as `ToObjsStylesTransformer` to transform Arrays to Objects, by merging each array item on top of the previous.
+
+For React Native you can use [StyleSheet.flatten](https://facebook.github.io/react-native/docs/stylesheet.html#flatten) to achieve this.
+
+```js
+StyleSheet.flatten([styles.listItem, styles.selectedListItem]);
+// returns { flex: 1, fontSize: 16, color: 'green' }
+```
+
+You can pass a custom the flattening operation by passing a `flatten` option
+
+```js
+const flatten = StyleSheet.flatten
+const transformer = new ToObjsStylesTransformer()
+
+StyleBuilder.create(styler, {
+  transformer,
+  flatten
+})
+```
+
+## Styler classes
+
+We recommend defining stylers using classes, though you can use simple objects with functions as well.
 
 ```js
 import { StyleBuilder } from 'reactive-style-builder'
 
-const TodoMixin = {
-  title({state, props}) {
+// compose stylers using either mixin approach or via extends inheritance
+class TodoStyler {
+  name = 'MyTodoStyler' // implicit class name (ie. constructor.name)
+
+  title({state, props}: IPropsState) {
       const {
         todo
       } = state
@@ -44,132 +157,169 @@ const TodoMixin = {
       color: todo && todo.completed ? 'red' : 'green',
       backgroundColor: props.count > 1 ? 'yellow' : 'white'
     }
-  },
-  heading({state}) {
+  }
+
+  heading({state}: IPropsState) {
     return {
       color: state.on ? 'blue' : 'gray',
     }
   }
-};
-
-export default StyleBuilder.create(TodoMixin, {
-    name: 'MyComponent'
-});
-```
-
-### Using Style classes
-
-As an alternative, pass a Style class and apply one or more class mixins to "mix and match" global and local styles if needed...
-
-You can also use `Object.assign` or `...` to merge objects directly.
-
-```js
-import { mixin } from 'core-decorators';
-
-@mixin(TodoMixin)
-class Styles {
 }
 
-export default StyleBuilder.create(Styles, {
-    name: 'App'
-});
+export const styler = StyleBuilder.create(TodoStyler)
 ```
+
+To combine multiple stylers, you can use either class inheritance or mixins (fx. via a mixin decorator).
 
 ## Component usage: Decorators
 
-You currently need to use generators: `@statefulStyling` and `@updateStyles`
+- `styler` (class)
+- `updateStyles` (function)
+- `reactiveStyles` (class)
 
-The `@statefulStyling` decorator adds the following functions to the component class:
+### styler
 
-- `updateState`
-- `initStyles`
-- `updateStyles`
+The `@styler` decorator will simply inject a styler into the component as `this.styler`
 
-### updateState
-
-The `updateState` function clears the "style cache key" before the state is set.
-
-Use `updateState` to set the state instead of `setState` for stateful styles to work correctly and avoid infinite recurssion!
-
-### initStyles
-
-`initStyles` creates the initial `StyleBuilder` (in `componentWillMount`)
+```js
+@styler(myStyler)
+export default class MyComponent extends Component {
+  //...
+}
+```
 
 ### updateStyles
 
-`updateStyles` is called by `componentWillUpdate` just before a new render to update the styling state.
+Use the `@updateStyles` decorator on `componentWillUpdate`. This ensures that `_computeNewStyles()` is called whenever the component is about to re-render (after a state/props change). This will then re-calculate the `styles` instance var based on the changes.
 
-Use the `@updateStyles` decorator on `componentWillMount` and `componentWillUpdate`. This ensures that the StyleBuilder is called whenever the component is about to render after a state/props change.
+### reactiveStyles
 
-It will then calculate the `styles` based on the new state/props and set it on local state.
+The `@reactiveStyles` decorator:
 
-Styles are always local state (ie in local scope) of the component and should not be reflected in app state!
+- decoratates the class with `@styler` decorator
+- decoratates the `componentWillUpdate` function with `@updateStyles` decorator
 
-### Example: Decorators
+## Full Example
+
+- `_common.ts`
+- `styler.ts`
+- `my-component.ts`
+
+### Common
+
+It is (always) useful to have a `_common` file to re-export the most commonly used refs to keep things DRY.
 
 ```js
-import { Styler } from './Styler'
-import {
-    statefulStyling,
-    updateStyles
-} from 'reactive-style-builder'
-import {
-    injectProps
-} from 'relpers'
+// _common.ts
+
+export {
+  reactiveStyles
+} from 'reactive-styles'
 
 import * as React from 'React'
-import {
+export {
   Component
 } from 'react'
+export {
+  React
+}
 
-// use 'native' to use 'native' computer
-@statefulStyling('browser', Styler)
+export {
+  autobind
+} from 'core-decorators'
+```
+
+### Styler
+
+```js
+// styler.ts
+
+import {
+  createStyleBuilder,
+  IPropsState
+} from 'reactive-styles'
+
+// compose stylers using either mixin approach or via extends inheritance
+class TodoStyler {
+  name = 'MyTodoStyler' // implicit class name (ie. constructor.name)
+
+  title({state, props}: IPropsState) {
+      const {
+        todo
+      } = state
+    return {
+      color: todo && todo.completed ? 'red' : 'green',
+      backgroundColor: props.count > 1 ? 'yellow' : 'white'
+    }
+  }
+
+  heading({state}: IPropsState) {
+    return {
+      color: state.on ? 'blue' : 'gray',
+    }
+  }
+}
+
+export const styler = createStyleBuilder(TodoStyler)
+```
+
+### Component
+
+```js
+// my-component.ts
+
+import { styler } from './styler'
+import {
+  React,
+  Component,
+  statefulStyling,
+  updateStyles,
+  autobind
+} from './_common'
+
+@reactiveStyles({
+  styler
+})
 export default class MyComponent extends Component {
 
   constructor(props) {
     super(props);
-    this.state = {
+
+    // set initial local component state
+    this.setState({
       todo: {
-        completed: false
+        completed: false // triggers new style
       }
-    }
-  }
-
-  @updateStyles
-  componentWillMount() {
-  }
-
-  @updateStyles
-  componentWillUpdate() {
+    })
   }
 
   @autobind
   handleCompleted() {
-    this.updateState({
+    this.setState({
         todo: {
-            completed: true
+            completed: true // triggers new style
         }
     });
   }
 
   @autobind
   handleStart() {
-    this.updateState({
+    this.setState({
         todo: {
             completed: false
         }
     });
   }
 
-  // https://github.com/goncalvesjoao/relpers
-  @injectProps('state', 'props')
-  render({ styles = {} }) {
-    // console.log('render styles', styles);
+  render() {
+    const {
+      styles
+    } = this
     return (
       <div style={styles.header}>
         <div style={styles.title}>Blip</div>
-        <button onClick={this.handleCompleted} >Complete</button>
-        <button onClick={this.handleStart} >Start</button>
+        <button onClick={this.handleCompleted}>Complete</button>
+        <button onClick={this.handleStart}>Start</button>
       </div>
     )
   }
@@ -184,43 +334,58 @@ For React Native you need to register a special `native` computer, which wraps t
 import { StyleBuilder } from 'reactive-style-builder'
 import { StyleSheet } from 'react-native'
 
-// native will be injected into a component and will thus have access to default?
-function native(options = {}) {
-    return StyleSheet.create(this.default(options))
+const styles = StyleSheet.create({
+  heading: {
+    flex: 1
+    fontSize: 32,
+  },
+  alert: {
+    color: 'red'
+  }
+  footer: {
+    flex: 3
+    color: 'blue'
+  }
+})
+
+class NativeStyler {
+  // reference special React Native stylesheet "classes"
+  heading({props, state}) {
+    return props.alert ? [styles.heading, styles.alert] : [styles.heading]
+  },
+  // ...
 }
 
-export default StyleBuilder.create(TodoMixin, {
-    name: 'MyComponent',
-    computers: {
-        native: native
-    }
+export default StyleBuilder.create(nativeStyler, {
+  // optional: use React Native stylesheet flatten
+  flatten: StyleSheet.flatten,
+  shouldFlatten: () => true
 });
 ```
 
 ## Development
 
-Babel6 is used to compile into ES5.
-
-`npm compile`
+TypeScript is used to compile into ES5.
 
 ## Testing
 
-Mocha with chai is used for testing in `/test`
+Jest is pre-configured
 
-`npm test`
+`jest`
 
 ## Contributing
 
 Please submit all issues and pull requests to the [kristianmandrup/style-builder](https://github.com/kristianmandrup/style-builder) repository!
 
 ## Support
+
 If you have any problem or suggestion please open an issue [here](https://github.com/kristianmandrup/style-builder/issues).
 
 ## License
 
 The MIT License
 
-Copyright (c) 2016, Kristian Mandrup
+Copyright (c) 2018, Kristian Mandrup
 
 Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated documentation

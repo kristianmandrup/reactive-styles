@@ -1,0 +1,1 @@
+{"version":3,"file":"base.js","sourceRoot":"","sources":["../../../../../src/style-builder/transformers/base.ts"],"names":[],"mappings":"AAKA,MAAM;IACJ,YAAY,IAAU;QACpB,IAAI,CAAC,SAAS,CAAC,IAAI,IAAI,EAAE,CAAC,CAAA;IAC5B,CAAC;IAED,SAAS,CAAC,IAAS;IACnB,CAAC;IAED,SAAS,CAAC,MAAW;QACnB,MAAM,CAAC,MAAM,CAAA;IACf,CAAC;CACF"}
