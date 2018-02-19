@@ -1,4 +1,7 @@
-import { StylesComputer } from './computers';
+import { StylesComputer, } from './computers';
+export { StylesComputer, };
+export { StyleResultHandler } from './computers';
+export { BaseStylesTransformer, ToObjsStylesTransformer } from './transformers';
 export function createStylesBuilder(styles, opts) {
     return StylesBuilder.create(styles, opts);
 }

@@ -3,5 +3,12 @@ export {
 } from './base'
 
 export {
-  StylesComputer
+  StylesComputer,
+  IStylesResults,
+  IStylesComputerOpts
 } from './computer'
+
+export {
+  IStyleResultHandler,
+  StyleResultHandler
+} from './handler'

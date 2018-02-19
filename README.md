@@ -1,6 +1,6 @@
-# Reactive style builder
+# Reactive styles
 
-A Reactive style builder for React and React Native
+Reactive styles for React, React Native and other frameworks or libraries based on props/state concept.
 
 ## Architecture
 
@@ -51,18 +51,19 @@ componentWillUpdate(nextProps: Props, nextState: State) {
 }
 ```
 
-## Example app
+## Example apps
 
-See:
+- `React` Coming soon ;)
+- `React Native` Coming soon ;)
+- `StencilJS` Coming soon ;)
 
-- [react demo app](https://github.com/kristianmandrup/react-smart-styles-demo)
-- [react native demo app](https://github.com/kristianmandrup/react-native-style-builder-demo)
+## Install
 
-For full usage examples ;)
+Install as runtime dependency via `npm` or `yarn`
 
-## Getting Started
+`$ npm i -S reactive-styles`
 
-`$ npm i -S reactive-style-builder`
+`$ yarn add reactive-styles`
 
 ## Usage
 
@@ -72,7 +73,7 @@ The `StylesBuilder` should be passed a `styler`, which is a map containing your 
 
 ## Stylers
 
-We recommend defining stylers using classes, though you can use simple objects with functions as well.
+You can define stylers using classes or simple function container objects.
 
 ### Object based styler
 
@@ -108,9 +109,9 @@ Class based stylers can be more verbose at first but may scale better for comple
 import {
   styleHelpers as _,
   Styler
-} from 'reactive-styles'
+} from 'Object.keystyles'
 
-import { StylesBuilder } from 'reactive-style-builder'
+import { StylesBuilder } from 'reactive-styles'
 
 // you can group toggle values for reuse
 const theme = {
@@ -507,7 +508,7 @@ export default class MyComponent extends Component {
 For React Native you need to register a special `native` computer, which wraps the built style result in a `StyleSheet` instance.
 
 ```js
-import { StylesBuilder } from 'reactive-style-builder'
+import { StylesBuilder } from 'reactive-styles'
 import { StyleSheet } from 'react-native'
 
 const styles = StyleSheet.create({

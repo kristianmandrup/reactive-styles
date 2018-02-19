@@ -1,4 +1,4 @@
-# Contributing to react-style-builder
+# Contributing to reactive-styles
 
 Please take a moment to review this document in order to make the contribution
 process easy and effective for everyone involved.
@@ -93,11 +93,11 @@ project:
 
    ```bash
    # Clone your fork of the repo into the current directory
-   git clone https://github.com/<your-username>/style-builder
+   git clone https://github.com/<your-username>/reactive-styles
    # Navigate to the newly cloned directory
-   cd style-builder
+   cd reactive-styles
    # Assign the original repo to a remote called "upstream"
-   git remote add upstream https://github.com/kristianmandrup/style-builder
+   git remote add upstream https://github.com/kristianmandrup/reactive-styles
    ```
 
 2. If you cloned a while ago, get the latest changes from upstream:

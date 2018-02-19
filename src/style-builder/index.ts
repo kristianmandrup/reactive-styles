@@ -5,8 +5,26 @@ export interface IPropsState {
 
 import {
   IStylesComputer,
-  StylesComputer
+  StylesComputer,
 } from './computers'
+
+export {
+  IStylesComputer,
+  StylesComputer,
+}
+
+export {
+  IStylesResults,
+  IStylesComputerOpts,
+  IStyleResultHandler,
+  StyleResultHandler
+} from './computers'
+
+export {
+  IStylesTransformer,
+  BaseStylesTransformer,
+  ToObjsStylesTransformer
+} from './transformers'
 
 export function createStylesBuilder(styles: any, opts?: any) {
   return StylesBuilder.create(styles, opts)

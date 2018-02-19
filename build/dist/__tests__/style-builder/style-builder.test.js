@@ -1,7 +1,4 @@
-import { StylesBuilder } from '../src/style-builder';
-import { StyleResultHandler } from '../src/style-builder/computers/handler';
-import { ToObjsStylesTransformer } from '../src/style-builder/transformers/to-objs';
-import { StylesComputer } from '../src/style-builder/computers/computer';
+import { StylesBuilder, StyleResultHandler, ToObjsStylesTransformer, StylesComputer } from '../';
 const styles = {};
 describe('Stylestyler', () => {
     describe('create w styles only', () => {
@@ -57,9 +54,17 @@ describe('Stylestyler', () => {
             a: 1
         };
         beforeEach(() => {
-            styler = new Stylestyler(styles, {
+            styler = new StylesBuilder(styles, {
                 name
             });
+        });
+        it('computes new styles', () => {
+            const opts = {
+                props,
+                state
+            };
+            const styles = styler.compute(opts);
+            expect(styles).toBeDefined();
         });
     });
 });

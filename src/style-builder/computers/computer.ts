@@ -25,7 +25,7 @@ export interface IStylesResults {
   transformed: any
 }
 
-interface IStylesComputerOpts {
+export interface IStylesComputerOpts {
   transformer?: IStylesTransformer
   handler?: IStyleResultHandler
   propsOnly?: boolean
