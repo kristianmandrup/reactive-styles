@@ -1,10 +1,12 @@
 import { BaseStylesTransformer } from '../transformers';
 import { StyleResultHandler } from './handler';
+import { isFun } from '../utils';
 export class StylesComputer {
     constructor(styler, options) {
         this.styler = styler;
         options = options || {};
         this.options = options;
+        this.propsOnly = !!options.propsOnly;
         this.transformer = options.transformer || this.defaultTransformer;
         this.transformer.configure(options);
         this.handler = options.handler || this.defaultHandler;
@@ -61,6 +63,11 @@ export class StylesComputer {
     transform(result) {
         return this.transformer ? this.transformer.transform(result) : result;
     }
+    callStylerFunction(styleFun, opts) {
+        if (!isFun(styleFun))
+            return null;
+        return this.propsOnly ? styleFun(opts.props) : styleFun(opts);
+    }
     /**
      *
      * @param result
@@ -68,8 +75,10 @@ export class StylesComputer {
      */
     styleGenerator(result, key) {
         const styleFun = this.styler[key];
-        let res = styleFun(this.opts);
-        result[key] = res;
+        let styleResult = this.callStylerFunction(styleFun, this.opts);
+        if (styleResult) {
+            result[key] = styleResult;
+        }
         this.handler.onStyleResult(result);
         return result;
     }

@@ -24,8 +24,7 @@ The flow requires that the component sets the new computed styles in `this.style
 
 ```js
 componentWillUpdate(nextProps: Props, nextState: State) {
-  const state = this.layoutState || nextState
-  this.styles = this.styler.compute({props: nextProps, state))
+  this.styles = this.styler.compute({props: nextProps, state: nextState))
 }
 ```
 
@@ -43,35 +42,12 @@ This decorates the component with:
 
 ```js
 _computeNewStyles() {
-  const state = this.layoutState || nextState
-  this.styles = this.styler.compute({props: nextProps, state))
+  this.styles = this.styler.compute({props: nextProps, state: nextState))
 }
 
 componentWillUpdate(nextProps: Props, nextState: State) {
   // previous componentWillUpdate logic
   this._computeNewStyles(nextProps, nextState)
-}
-```
-
-## Using layoutState
-
-We pass `layoutState` by default, in order to allow a more flexible distinction between application and layout (only) state, if needed.
-
-Sample implementation:
-
-```js
-setState(newState) {
-  this.layoutState = newState
-  this.appState = newState
-  super.setState(this.appState)
-}
-
-set layoutState(newState) {
-  this._layoutState = // some state filtering
-}
-
-set appState(newState) {
-  this._appState = // some state filtering
 }
 ```
 
@@ -90,9 +66,9 @@ For full usage examples ;)
 
 ## Usage
 
-Use `StyleBuilder.create` or `createStyleBuilder` to create a `StyleBuilder` instance for your component.
+Use `StylesBuilder.create` or `createStylesBuilder` to create a `StylesBuilder` instance for your component.
 
-The `StyleBuilder` should be passed a `styler`, which is a map containing your reactive styling functions (think "reactive style classes"). `StyleBuilder` exposes a `compute({props, state})` function, which computes new `styles`.
+The `StylesBuilder` should be passed a `styler`, which is a map containing your reactive styling functions (think "reactive style classes"). `StylesBuilder` exposes a `compute({props, state})` function, which computes new `styles`.
 
 ## Stylers
 
@@ -105,14 +81,14 @@ import {
   styleHelpers as _
 } from 'reactive-styles/styler'
 
-export const styler = createStyleBuilder({
+export const styler = createStylesBuilder({
   // optional: uses all object keys by default
   // styleClasses: [
   //   'title',
   //   'heading'
   // ]
 
-  title({state, props}: IStateProps) {
+  title({state, props}) {
     return {
       color: _.toggle(state.todo.completed, 'red', 'green'),
       backgroundColor: _.toggle(() => props.count > 1, 'yellow' : 'white')
@@ -132,9 +108,9 @@ Class based stylers can be more verbose at first but may scale better for comple
 import {
   styleHelpers as _,
   Styler
-} from 'reactive-styles/styler'
+} from 'reactive-styles'
 
-import { StyleBuilder } from 'reactive-style-builder'
+import { StylesBuilder } from 'reactive-style-builder'
 
 // you can group toggle values for reuse
 const theme = {
@@ -170,10 +146,93 @@ class TodoStyler extends Styler {
   }
 }
 
-export const styler = StyleBuilder.create(TodoStyler)
+export const styler = StylesBuilder.create(TodoStyler)
 ```
 
-To combine multiple stylers, you can use either class inheritance or mixins (fx. via a mixin decorator).
+### Style helpers
+
+The set of style helper functions are imported as `_` (or similar convenience identifier) by convention
+
+```js
+import {
+  styleHelpers as _,
+} from 'reactive-styles'
+```
+
+The following functions come pre-packaged:
+
+boolean compare:
+
+- `toggle` toggle on boolean state
+
+number compare:
+
+- `gt` >
+- `gte` >=
+- `lt` <
+- `lte` <=>
+- `eq` ==
+- `neq` !==
+
+The functions can be extended with your own as you see fit.
+The helpers are more composable (ie. functions) and maintainable than using logical boolean expression directly
+
+```js
+backgroundColor: _.gt(props.count, 1, theme.color.bgChoice)
+```
+
+Elegant to compose
+
+```js
+backgroundColor: _.gt(props.count, 1, theme.color.bgChoice) || theme.color.bgDefault
+```
+
+Instead of the ugly:
+
+```js
+const { bgChoice, bgDefault } = theme.color
+// ...
+backgroundColor: props.count > 1 ? bgChoice[0] : bgChoice[1]
+```
+
+Which is event more ugly to compose
+
+```js
+backgroundColor: (props.count > 1 ? bgChoice[0] : bgChoice[1]) || bgDefault
+```
+
+### Combining Stylers
+
+To combine multiple stylers, you can use either class inheritance, mixins (decorator?) or use the powerful `@useStyler` decorator as follows:
+
+```js
+@useStyler(mixinStyler, [
+  // names of foreign styler functions to inject as instance methods
+  'heading',
+  'content',
+  'text'
+])
+class TodoStyler extends Styler {
+  // ...
+}
+```
+
+For styler objects, you could use any kind of merge operation to achieve the same, such as `Object.assign()` or using `...` operator.
+
+```js
+const mixinStylerA = {
+  // ...
+}
+
+const mixinStylerB = {
+  // ...
+}
+
+const combiStyler = {
+  ...mixinStylerA,
+  ...mixinStylerB
+}
+```
 
 ### styles
 
@@ -196,7 +255,7 @@ Here, `styles.heading` and `styles.footer` are refered to as "style classes".
 
 The style classes can be either an Object or an Array, depending on the context the styles are used in. For React Native, the style classes will often contain an array referencing one or more `StyleSheet` classes created via `StyleSheet.create(styleSheerObj)`
 
-You can pass a custom transformer, such as `ToObjsStylesTransformer` to transform Arrays to Objects, by merging each array item on top of the previous.
+You can pass a custom `transformer`, such as `ToObjsStylesTransformer` to transform Arrays to Objects, by merging each array item on top of the previous.
 
 For React Native you can use [StyleSheet.flatten](https://facebook.github.io/react-native/docs/stylesheet.html#flatten) to achieve this.
 
@@ -205,19 +264,42 @@ StyleSheet.flatten([styles.listItem, styles.selectedListItem]);
 // returns { flex: 1, fontSize: 16, color: 'green' }
 ```
 
-You can pass a custom the flattening operation by passing a `flatten` option
+You can pass a custom flatten operation to be used by the transformer, by passing a `flatten` option
 
 ```js
 import {
-  createStyleBuilder
+  createStylesBuilder
 } from 'reactive-styles'
 
 const flatten = StyleSheet.flatten
 const transformer = new ToObjsStylesTransformer()
 
-createStyleBuilder(styler, {
+createStylesBuilder(styler, {
   transformer,
   flatten
+})
+```
+
+## Props only mode
+
+For stateless components that only have `props` you can set a `propsOnly` mode on the `StylesBuilder`
+
+```js
+createStylesBuilder(styler, {
+  propsOnly: true
+})
+```
+
+Then your styler functions can be simplified to take only a props argument:
+
+```js
+export const styler = createStylesBuilder({
+  title(props) {
+    return {
+      backgroundColor: _.gt(props.count, 1, theme.bg.countColor)
+    }
+  },
+  // ...
 })
 ```
 
@@ -240,7 +322,7 @@ or sublclass `StyleResultHandler`
 Use the `handler` by passing it as an option:
 
 ```js
-createStyleBuilder(styler, {
+createStylesBuilder(styler, {
   transformer,
   handler
 })
@@ -269,6 +351,22 @@ export default class MyComponent extends Component {
 
 Use the `@updateStyles` decorator on `componentWillUpdate`. This ensures that `_computeNewStyles()` is called whenever the component is about to re-render (after a state/props change). This will then re-calculate the `styles` instance var based on the changes.
 
+### useStyler
+
+The `@useStyler` decorator can be used to inject/mixin stylers as follows
+
+```js
+@useStyler(mixinStyler, [
+  // names of foreign styler functions to inject as instance methods
+  // if no names argument, inject all
+  'heading',
+  'content',
+  'text'
+])
+class TodoStyler extends Styler {
+}
+```
+
 ### reactiveStyles
 
 The `@reactiveStyles` decorator:
@@ -278,16 +376,16 @@ The `@reactiveStyles` decorator:
 
 ## Full Example
 
-- `_common.ts`
-- `styler.ts`
-- `my-component.ts`
+- `_common.js`
+- `styler.js`
+- `my-component.js`
 
 ### Common
 
 It is (always) useful to have a `_common` file to re-export the most commonly used refs to keep things DRY.
 
 ```js
-// _common.ts
+// _common.js
 
 export {
   reactiveStyles
@@ -309,18 +407,16 @@ export {
 ### Styler
 
 ```js
-// styler.ts
+// styler.js
 
 import {
-  createStyleBuilder,
+  createStylesBuilder,
   IPropsState
 } from 'reactive-styles'
 
 // compose stylers using either mixin approach or via extends inheritance
 class TodoStyler {
-  name = 'MyTodoStyler' // implicit class name (ie. constructor.name)
-
-  title({state, props}: IPropsState) {
+  title({state, props}) {
       const {
         todo
       } = state
@@ -330,20 +426,20 @@ class TodoStyler {
     }
   }
 
-  heading({state}: IPropsState) {
+  heading({state}) {
     return {
       color: state.on ? 'blue' : 'gray',
     }
   }
 }
 
-export const styler = createStyleBuilder(TodoStyler)
+export const styler = createStylesBuilder(TodoStyler)
 ```
 
 ### Component
 
 ```js
-// my-component.ts
+// my-component.js
 
 import { styler } from './styler'
 import {
@@ -363,24 +459,27 @@ export default class MyComponent extends Component {
     super(props);
 
     // set initial local component state
+    // triggers new style
     this.setState({
       todo: {
-        completed: false // triggers new style
+        completed: false
       }
     })
   }
 
   @autobind
   handleCompleted() {
+    // triggers new style
     this.setState({
         todo: {
-            completed: true // triggers new style
+            completed: true
         }
     });
   }
 
   @autobind
   handleStart() {
+    // triggers new style
     this.setState({
         todo: {
             completed: false
@@ -394,7 +493,7 @@ export default class MyComponent extends Component {
     } = this
     return (
       <div style={styles.header}>
-        <div style={styles.title}>Blip</div>
+        <div style={styles.title}>My title</div>
         <button onClick={this.handleCompleted}>Complete</button>
         <button onClick={this.handleStart}>Start</button>
       </div>
@@ -408,7 +507,7 @@ export default class MyComponent extends Component {
 For React Native you need to register a special `native` computer, which wraps the built style result in a `StyleSheet` instance.
 
 ```js
-import { StyleBuilder } from 'reactive-style-builder'
+import { StylesBuilder } from 'reactive-style-builder'
 import { StyleSheet } from 'react-native'
 
 const styles = StyleSheet.create({
@@ -433,7 +532,7 @@ class NativeStyler {
   // ...
 }
 
-export default StyleBuilder.create(nativeStyler, {
+export default StylesBuilder.create(nativeStyler, {
   // optional: use React Native stylesheet flatten
   flatten: StyleSheet.flatten,
   shouldFlatten: () => true

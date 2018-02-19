@@ -16,6 +16,10 @@ import {
   IStylesComputer
 } from './base'
 
+import {
+  isFun
+} from '../utils'
+
 export interface IStylesResults {
   styles: any
   transformed: any
@@ -24,6 +28,7 @@ export interface IStylesResults {
 interface IStylesComputerOpts {
   transformer?: IStylesTransformer
   handler?: IStyleResultHandler
+  propsOnly?: boolean
 }
 
 
@@ -31,6 +36,7 @@ export class StylesComputer implements IStylesComputer {
   results: IStylesResults
   transformer: IStylesTransformer
   handler: IStyleResultHandler
+  propsOnly: boolean
 
   protected options: any
   protected opts: IPropsState
@@ -38,6 +44,7 @@ export class StylesComputer implements IStylesComputer {
   constructor(public styler: any, options?: IStylesComputerOpts) {
     options = options || {}
     this.options = options
+    this.propsOnly = !!options.propsOnly
     this.transformer = options.transformer || this.defaultTransformer
     this.transformer.configure(options)
     this.handler = options.handler || this.defaultHandler
@@ -104,6 +111,11 @@ export class StylesComputer implements IStylesComputer {
     return this.transformer ? this.transformer.transform(result) : result
   }
 
+  callStylerFunction(styleFun: Function, opts: any) {
+    if (!isFun(styleFun)) return null
+    return this.propsOnly ? styleFun(opts.props) : styleFun(opts)
+  }
+
   /**
    *
    * @param result
@@ -111,8 +123,10 @@ export class StylesComputer implements IStylesComputer {
    */
   styleGenerator(result: any, key: string): any {
     const styleFun: Function = this.styler[key]
-    let res = styleFun(this.opts)
-    result[key] = res
+    let styleResult = this.callStylerFunction(styleFun, this.opts)
+    if (styleResult) {
+      result[key] = styleResult
+    }
     this.handler.onStyleResult(result)
     return result
   }

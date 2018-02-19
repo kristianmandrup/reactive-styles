@@ -1,7 +1,5 @@
 import { BaseStylesTransformer } from './base';
-function isFun(fun) {
-    return typeof fun === 'function';
-}
+import { isFun } from '../utils';
 export class ToObjsStylesTransformer extends BaseStylesTransformer {
     constructor(opts) {
         super(opts);

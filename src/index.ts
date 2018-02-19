@@ -5,7 +5,7 @@ export {
 
 export {
   IPropsState,
-  StyleBuilder
+  StylesBuilder
 } from './style-builder';
 
 export {

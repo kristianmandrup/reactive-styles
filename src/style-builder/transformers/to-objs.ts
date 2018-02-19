@@ -3,9 +3,9 @@ import {
   BaseStylesTransformer
 } from './base'
 
-function isFun(fun: any) {
-  return typeof fun === 'function'
-}
+import {
+  isFun
+} from '../utils'
 
 export class ToObjsStylesTransformer extends BaseStylesTransformer implements IStylesTransformer {
   _flatten: Function

@@ -12,13 +12,12 @@ export function updateStyles(target: any, name: string, descriptor: PropertyDesc
   let oldHandler = target
 
   function updateStyler(nextProps: any, nextState: any) {
-    const ctx: any = target
     // requires that component has an updateStyles method
-    if (!ctx._computeNewStyles) {
+    if (!target._computeNewStyles) {
       console.error('@updateStyles error: missing _computeNewStyles method on Component', target)
     }
-    ctx._computeNewStyles(nextProps, nextState)
-    oldHandler.apply(ctx, arguments)
+    target._computeNewStyles(nextProps, nextState)
+    oldHandler.apply(target, arguments)
   }
 
   if (typeof target === 'function') {
@@ -37,14 +36,29 @@ export function styler(styleBuilder: any) {
   }
 }
 
+export function useStylers(styler: any, names?: string[]) {
+  return function (target: any) {
+    const classStylers = names || styler.styleClasses || Object.keys(styler)
+    classStylers.map((name: string) => {
+      const classStyler = styler[name]
+      if (typeof classStyler !== 'function') return
+      // create instance method on class that wraps call to standalone function
+      target.prototype[name] = function () {
+        const opts = { props: this.props, state: this.state }
+        styler.callStylerFunction(classStyler, opts)
+      }
+    })
+  }
+}
+
+
 export function reactiveStyles(styleBuilder: any) {
   return function (target: any) {
     target.styler = styleBuilder
 
     // add function _computeNewStyles to target (class ie. prototype)
     target.prototype._computeNewStyles = function (nextProps: any, nextState: any) {
-      const state = this.layoutState || nextState
-      target.styles = target.styler.compute({ props: nextProps, state })
+      this.styles = this.styler.compute({ props: nextProps, state: nextState })
     }
     const componentWillUpdateDescriptor: PropertyDescriptor | undefined = Object.getOwnPropertyDescriptor(target, 'componentWillUpdate')
     if (componentWillUpdateDescriptor) {

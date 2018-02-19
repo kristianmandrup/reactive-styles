@@ -8,11 +8,15 @@ import {
   StylesComputer
 } from './computers'
 
-export function createStyleBuilder(styles: any, opts?: any) {
-  return StyleBuilder.create(styles, opts)
+export function createStylesBuilder(styles: any, opts?: any) {
+  return StylesBuilder.create(styles, opts)
 }
 
-export class StyleBuilder {
+export interface IStylesBuilder {
+  compute(opts: IPropsState): any
+}
+
+export class StylesBuilder {
   name: any
   styles: any
   computer: IStylesComputer
@@ -22,13 +26,26 @@ export class StyleBuilder {
     styles = typeof styles === 'function' ? new styles() : styles
     this.styles = styles;
     this.name = styles.name || opts.name || this.defaultName
-    this.computer = opts.computer || this.defaultComputer
+    this.computer = this.buildComputer(opts) || this.defaultComputer
   }
+
+  protected buildComputer(opts: any) {
+    return this.createComputer(opts) || this.createComputerFromClass(opts)
+  }
+
+  protected createComputer(opts: any) {
+    return opts.createComputer && opts.createComputer(this, opts)
+  }
+
+  protected createComputerFromClass(opts: any) {
+    return opts.computerClass && new opts.computerClass(this, opts)
+  }
+
 
   /**
    * Name to be used for logging, debugging etc
    */
-  get defaultName() {
+  protected get defaultName() {
     return this.constructor.name
   }
 
@@ -38,13 +55,13 @@ export class StyleBuilder {
    * @param opts
    */
   static create(styles: any, opts = {}) {
-    return new StyleBuilder(styles, opts)
+    return new StylesBuilder(styles, opts)
   }
 
   /**
    * Default computr to be used
    */
-  get defaultComputer(): IStylesComputer {
+  protected get defaultComputer(): IStylesComputer {
     return new StylesComputer(this.styles)
   }
 
@@ -52,7 +69,7 @@ export class StyleBuilder {
    * Use a Styles Computer to compute new styles
    * @param opts
    */
-  compute(opts: IPropsState) {
+  compute(opts: IPropsState): any {
     return this.computer.compute(opts)
   }
 }

@@ -1,32 +1,55 @@
-import { StyleBuilder } from '../src/style-builder';
+import { StylesBuilder } from '../src/style-builder';
+import { StyleResultHandler } from '../src/style-builder/computers/handler';
+import { ToObjsStylesTransformer } from '../src/style-builder/transformers/to-objs';
+import { StylesComputer } from '../src/style-builder/computers/computer';
 const styles = {};
-describe('StyleBuilder', () => {
-    describe('create w styles', () => {
-        let builder;
+describe('Stylestyler', () => {
+    describe('create w styles only', () => {
+        let styler;
         beforeEach(() => {
-            builder = new StyleBuilder(styles);
+            styler = new StylesBuilder(styles);
         });
-        it('should create a StyleBuilder object', () => {
-            expect(builder).toBeDefined();
+        it('should create a Stylestyler object', () => {
+            expect(styler).toBeDefined();
         });
         it('has the styles object assigned', () => {
-            expect(builder.styles).toBe(styles);
+            expect(styler.styles).toBe(styles);
         });
     });
-    describe('create w styles and name', () => {
-        let builder;
-        const name = 'my-builder';
+    describe('create w styles and options', () => {
+        let styler;
+        const name = 'my-styler';
+        const propsOnly = true;
+        const handler = new StyleResultHandler();
+        const transformer = new ToObjsStylesTransformer();
+        const computerClass = StylesComputer;
         beforeEach(() => {
-            builder = new StyleBuilder(styles, {
-                name
+            styler = new StylesBuilder(styles, {
+                name,
+                propsOnly,
+                computerClass,
+                handler,
+                transformer
             });
         });
         it('has the styles object assigned', () => {
-            expect(builder.name).toBe(name);
+            expect(styler.name).toBe(name);
+        });
+        it('sets styles', () => {
+            expect(styler.styles).toBeDefined();
+        });
+        it('sets computer', () => {
+            expect(styler.computer).toBeInstanceOf(StylesComputer);
+        });
+        it('sets styler on computer', () => {
+            expect(styler.computer.styler).toBe(styler);
+        });
+        it('sets handler on computer', () => {
+            expect(styler.computer.handler).toBe(handler);
         });
     });
-    describe('init', () => {
-        let builder;
+    describe('compute', () => {
+        let styler;
         const props = {
             x: 2
         };
@@ -34,45 +57,9 @@ describe('StyleBuilder', () => {
             a: 1
         };
         beforeEach(() => {
-            builder = new StyleBuilder(styles, {
+            styler = new Stylestyler(styles, {
                 name
-            }).init({
-                props,
-                state
             });
-        });
-        it('sets state to passed state', () => {
-            expect(builder.state).toBe(state);
-        });
-        it('sets props to passed props', () => {
-            expect(builder.props).toBe(props);
-        });
-        it('initializes styleResult', () => {
-            expect(builder.styleResult).toBeDefined();
-        });
-        it('initializes dependencyMap', () => {
-            expect(builder.dependencyMap).toBeDefined();
-        });
-        it('initializes typeMap', () => {
-            expect(builder.typeMap).toBeDefined();
-        });
-        it('sets styles', () => {
-            expect(builder.styles).toBeDefined();
-        });
-        it('sets styles', () => {
-            expect(builder.styles).toBeDefined();
-        });
-        it('sets computers', () => {
-            expect(builder.computers).toBeDefined();
-        });
-        it('sets logger', () => {
-            expect(builder.computers).toBeDefined();
-        });
-        it('sets logOn', () => {
-            expect(builder.logOn).toBeDefined();
-        });
-        it('registers dependencies', () => {
-            expect(builder.dependenciesRegistered).toBe(true);
         });
     });
 });

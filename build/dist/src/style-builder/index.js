@@ -1,14 +1,23 @@
 import { StylesComputer } from './computers';
-export function createStyleBuilder(styles, opts) {
-    return StyleBuilder.create(styles, opts);
+export function createStylesBuilder(styles, opts) {
+    return StylesBuilder.create(styles, opts);
 }
-export class StyleBuilder {
+export class StylesBuilder {
     constructor(styles, opts) {
         opts = opts || {};
         styles = typeof styles === 'function' ? new styles() : styles;
         this.styles = styles;
         this.name = styles.name || opts.name || this.defaultName;
-        this.computer = opts.computer || this.defaultComputer;
+        this.computer = this.buildComputer(opts) || this.defaultComputer;
+    }
+    buildComputer(opts) {
+        return this.createComputer(opts) || this.createComputerFromClass(opts);
+    }
+    createComputer(opts) {
+        return opts.createComputer && opts.createComputer(this, opts);
+    }
+    createComputerFromClass(opts) {
+        return opts.computerClass && new opts.computerClass(this, opts);
     }
     /**
      * Name to be used for logging, debugging etc
@@ -22,7 +31,7 @@ export class StyleBuilder {
      * @param opts
      */
     static create(styles, opts = {}) {
-        return new StyleBuilder(styles, opts);
+        return new StylesBuilder(styles, opts);
     }
     /**
      * Default computr to be used
