@@ -129,16 +129,47 @@ StyleSheet.flatten([styles.listItem, styles.selectedListItem]);
 You can pass a custom the flattening operation by passing a `flatten` option
 
 ```js
+import {
+  createStyleBuilder
+} from 'reactive-styles'
+
 const flatten = StyleSheet.flatten
 const transformer = new ToObjsStylesTransformer()
 
-StyleBuilder.create(styler, {
+createStyleBuilder(styler, {
   transformer,
   flatten
 })
 ```
 
-## Styler classes
+## Handlers
+
+You can add a handler to handle the main compute events:
+
+Implement the `IStyleResultHandler` interface
+
+```js
+export interface IStyleResultHandler {
+  onStyleResult(result: any): void
+  onStyleResults(styles: any): void
+  onTransformedStyleResults(transformed: any): void
+}
+```
+
+or sublclass `StyleResultHandler`
+
+Use the `handler` by passing it as an option:
+
+```js
+createStyleBuilder(styler, {
+  transformer,
+  handler
+})
+```
+
+You can use this to log events in order to track style generation etc.
+
+## Stylers
 
 We recommend defining stylers using classes, though you can use simple objects with functions as well.
 
