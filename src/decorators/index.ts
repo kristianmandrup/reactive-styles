@@ -1,3 +1,12 @@
+export function styleClass(target: any, name: string, descriptor: PropertyDescriptor) {
+  target.$styles = target.styles || []
+  target.$styles.push(name)
+  return descriptor
+}
+
+
+
+
 // @updateStyles
 export function updateStyles(target: any, name: string, descriptor: PropertyDescriptor) {
   let oldHandler = target

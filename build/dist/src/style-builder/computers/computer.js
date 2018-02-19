@@ -1,8 +1,8 @@
 import { BaseStylesTransformer } from '../transformers';
 import { StyleResultHandler } from './handler';
 export class StylesComputer {
-    constructor(styles, options) {
-        this.styles = styles;
+    constructor(styler, options) {
+        this.styler = styler;
         options = options || {};
         this.options = options;
         this.transformer = options.transformer || this.defaultTransformer;
@@ -31,13 +31,28 @@ export class StylesComputer {
      */
     compute(opts = {}) {
         this.opts = opts;
+        this.prepareStyler();
         const transformed = this.transform(this.styleResult());
         this.handler.onTransformedStyleResults(transformed);
         this.results.transformed = transformed;
         return transformed;
     }
+    prepareStyler() {
+        if (this.styler.configure) {
+            this.styler.configure(this.opts);
+        }
+    }
+    get uniqueStyleClasses() {
+        return Array.from(new Set(this.styler.styleClasses));
+    }
+    get stylerKeys() {
+        return Object.keys(this.styler);
+    }
+    get styleClasses() {
+        return this.styler.styleClasses ? this.uniqueStyleClasses : this.stylerKeys;
+    }
     styleResult() {
-        const styles = Object.keys(this.styles).reduce(this.styleGenerator, {});
+        const styles = this.styleClasses.reduce(this.styleGenerator, {});
         this.handler.onStyleResults(styles);
         this.results.styles = styles;
         return styles;
@@ -52,7 +67,7 @@ export class StylesComputer {
      * @param key
      */
     styleGenerator(result, key) {
-        const styleFun = this.styles[key];
+        const styleFun = this.styler[key];
         let res = styleFun(this.opts);
         result[key] = res;
         this.handler.onStyleResult(result);

@@ -1,3 +1,8 @@
+export function styleClass(target, name, descriptor) {
+    target.$styles = target.styles || [];
+    target.$styles.push(name);
+    return descriptor;
+}
 // @updateStyles
 export function updateStyles(target, name, descriptor) {
     let oldHandler = target;

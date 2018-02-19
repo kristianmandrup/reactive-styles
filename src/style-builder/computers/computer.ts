@@ -35,7 +35,7 @@ export class StylesComputer implements IStylesComputer {
   protected options: any
   protected opts: IPropsState
 
-  constructor(public styles: any, options?: IStylesComputerOpts) {
+  constructor(public styler: any, options?: IStylesComputerOpts) {
     options = options || {}
     this.options = options
     this.transformer = options.transformer || this.defaultTransformer
@@ -67,14 +67,33 @@ export class StylesComputer implements IStylesComputer {
    */
   compute(opts: IPropsState = {}): any {
     this.opts = opts
+    this.prepareStyler()
     const transformed = this.transform(this.styleResult())
     this.handler.onTransformedStyleResults(transformed)
     this.results.transformed = transformed
     return transformed
   }
 
+  protected prepareStyler() {
+    if (this.styler.configure) {
+      this.styler.configure(this.opts)
+    }
+  }
+
+  protected get uniqueStyleClasses(): string[] {
+    return Array.from(new Set(this.styler.styleClasses))
+  }
+
+  protected get stylerKeys(): string[] {
+    return Object.keys(this.styler)
+  }
+
+  protected get styleClasses(): string[] {
+    return this.styler.styleClasses ? this.uniqueStyleClasses : this.stylerKeys
+  }
+
   styleResult() {
-    const styles = Object.keys(this.styles).reduce(this.styleGenerator, {})
+    const styles = this.styleClasses.reduce(this.styleGenerator, {})
     this.handler.onStyleResults(styles)
     this.results.styles = styles
     return styles
@@ -91,7 +110,7 @@ export class StylesComputer implements IStylesComputer {
    * @param key
    */
   styleGenerator(result: any, key: string): any {
-    const styleFun: Function = this.styles[key]
+    const styleFun: Function = this.styler[key]
     let res = styleFun(this.opts)
     result[key] = res
     this.handler.onStyleResult(result)

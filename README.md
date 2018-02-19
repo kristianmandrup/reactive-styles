@@ -92,9 +92,88 @@ For full usage examples ;)
 
 Use `StyleBuilder.create` or `createStyleBuilder` to create a `StyleBuilder` instance for your component.
 
-The `StyleBuilder` should be passed a `styler`, which is a map containing your reactive styling functions (think "reactive style classes").
+The `StyleBuilder` should be passed a `styler`, which is a map containing your reactive styling functions (think "reactive style classes"). `StyleBuilder` exposes a `compute({props, state})` function, which computes new `styles`.
 
-The `StyleBuilder` exposes a `compute({props, state})` function, which computes new `styles`.
+## Stylers
+
+We recommend defining stylers using classes, though you can use simple objects with functions as well.
+
+### Object based styler
+
+```js
+import {
+  styleHelpers as _
+} from 'reactive-styles/styler'
+
+export const styler = createStyleBuilder({
+  // optional: uses all object keys by default
+  // styleClasses: [
+  //   'title',
+  //   'heading'
+  // ]
+
+  title({state, props}: IStateProps) {
+    return {
+      color: _.toggle(state.todo.completed, 'red', 'green'),
+      backgroundColor: _.toggle(() => props.count > 1, 'yellow' : 'white')
+    }
+  },
+  heading({state}) {
+    // ...
+  }
+})
+```
+
+### Class based styler
+
+Class based stylers can be more verbose at first but may scale better for complex logic and more customizations.
+
+```js
+import {
+  styleHelpers as _,
+  Styler
+} from 'reactive-styles/styler'
+
+import { StyleBuilder } from 'reactive-style-builder'
+
+// you can group toggle values for reuse
+const theme = {
+  color: {
+    bgChoice: ['black', 'white'],
+    borderChoice: ['blue', 'gray']
+  }
+}
+
+// compose stylers using either mixin approach or via extends inheritance
+class TodoStyler extends Styler {
+  // list all styleClasses to be used
+  styleClasses = [
+    'title',
+    'heading'
+  ]
+
+  // alternatively, mark each styleclass method using decorator
+  @styleClass()
+  title() {
+    const { state, props, _ } = this
+    return {
+      borderDolor: _.toggle(state.todo.completed, theme.color.borderChoice),
+      backgroundColor: _.gt(props.count, 1, theme.color.bgChoice)
+    }
+  }
+
+  heading() {
+    const { state, _ } = this
+    return {
+      color: _.toggle(state.on, )
+    }
+  }
+}
+
+export const styler = StyleBuilder.create(TodoStyler)
+```
+
+To combine multiple stylers, you can use either class inheritance or mixins (fx. via a mixin decorator).
 
 ### styles
 
@@ -168,39 +247,6 @@ createStyleBuilder(styler, {
 ```
 
 You can use this to log events in order to track style generation etc.
-
-## Stylers
-
-We recommend defining stylers using classes, though you can use simple objects with functions as well.
-
-```js
-import { StyleBuilder } from 'reactive-style-builder'
-
-// compose stylers using either mixin approach or via extends inheritance
-class TodoStyler {
-  name = 'MyTodoStyler' // implicit class name (ie. constructor.name)
-
-  title({state, props}: IPropsState) {
-      const {
-        todo
-      } = state
-    return {
-      color: todo && todo.completed ? 'red' : 'green',
-      backgroundColor: props.count > 1 ? 'yellow' : 'white'
-    }
-  }
-
-  heading({state}: IPropsState) {
-    return {
-      color: state.on ? 'blue' : 'gray',
-    }
-  }
-}
-
-export const styler = StyleBuilder.create(TodoStyler)
-```
-
-To combine multiple stylers, you can use either class inheritance or mixins (fx. via a mixin decorator).
 
 ## Component usage: Decorators
 
